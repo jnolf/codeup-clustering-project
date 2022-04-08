@@ -3,21 +3,21 @@
 #### Reported by Jerry Nolf  -  April 8, 2022
 ---- 
 ### 1. Overview Project Goals
-    - Create a model that minimizes absolute log error
-    - Continue working with the Zillow Regression Project and incorporate clustering methodologies
-    - Construct a machine learning regression model
-    - Find key drivers of absolute log error of the zestimate
+- Create a model that minimizes absolute log error
+- Continue working with the Zillow Regression Project and incorporate clustering methodologies
+- Construct a machine learning regression model
+- Find key drivers of absolute log error of the zestimate
 
 ---- 
 ### 2. Project Description
-    - Use clustering methodologies to further your findings and refine teh current model
+- Use clustering methodologies to further your findings and refine teh current model
 
 ---- 
 ### 3. Initial Questions/Hypothesis
-    - Which county has the highest absolute log error?
-    - Is there a linear relationship between logerror and age for each county?
-    - Is there a linear relationship between acres and logerror?
-    - What counties have the largest log errors?
+- Which county has the highest absolute log error?
+- Is there a linear relationship between logerror and age for each county?
+- Is there a linear relationship between acres and logerror?
+- What counties have the largest log errors?
 ---- 
 ### 4. Data Dictionary 
 |Column | Description | Dtype|
