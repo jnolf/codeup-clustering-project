@@ -152,7 +152,7 @@ Plan ➜ Acquire ➜ Prepare ➜ Explore ➜ Model & Evaluate ➜ Deliver
 - location_cluster
 - house-to_lot_cluster
 
-Using these drivers, the model will decrease log error by 0.0176477
+Using these drivers, the model will decrease log error by 0.015191
 
 ### Recommendation(s):
 While our model does improve slightly on absolute log error, higher quality data is needed in order for larger gains.
