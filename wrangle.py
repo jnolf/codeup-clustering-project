@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 import os
 
 from sklearn.model_selection import train_test_split
@@ -56,7 +59,7 @@ def acquire_df(use_cache=True):
     
     df = pd.read_sql(query, database_url_base)
     df.to_csv('zillow.csv', index=False)
-   
+    
     return df
 
 ################## Dealing With Missing Values #####################
@@ -68,7 +71,7 @@ def handle_missing_values(df, prop_required_column = .6, prop_required_row = .75
     df.dropna(axis=1, thresh = threshold, inplace = True)
     threshold = int(round(prop_required_row * len(df.columns), 0))
     df.dropna(axis = 0, thresh = threshold, inplace = True)
-    return 
+    return df
 
 def missing_values(df):
     missing_values =pd.concat([
@@ -108,6 +111,24 @@ def remove_outliers(df, k, cols):
 
 ############################# Clean ################################
 
+def get_counties(df):
+    '''
+    This function will create dummy variables out of the original fips column. 
+    And return a dataframe with all of the original columns except regionidcounty.
+    We will keep fips column for data validation after making changes. 
+    New columns added will be 'LA', 'Orange', and 'Ventura' which are boolean 
+    The fips ids are renamed to be the name of the county each represents. 
+    '''
+    # create dummy vars of fips id
+    county_df = pd.get_dummies(df.fips)
+    # rename columns by actual county name
+    county_df.columns = ['los_angeles', 'orange', 'ventura']
+    # concatenate the dataframe with the 3 county columns to the original dataframe
+    df_dummies = pd.concat([df, county_df], axis = 1)
+    # drop regionidcounty and fips columns
+    df_dummies = df_dummies.drop(columns = ['regionidcounty'])
+    return df_dummies
+
 def clean_df(df):
     '''
     This function takes in the zillow data, cleans it, and returns a dataframe
@@ -116,9 +137,12 @@ def clean_df(df):
     single_fam_use = [261, 262, 263, 264, 265, 266, 268, 273, 275, 276, 279]
     # Make sure the DataFarme only includes the above
     df = df[df.propertylandusetypeid.isin(single_fam_use)]
-     
+    
+#     df = get_counties(df) 
+    
     # Remove further outliers for sqft to ensure data is usable
-#     df = df[(df.calculatedfinishedsquarefeet > 500 & df.calculatedfinishedsquarefeet < 3_000)]
+    df = df[(df['calculatedfinishedsquarefeet'] > 500) 
+            & (df['calculatedfinishedsquarefeet'] <3_000)]
     
     # Remove further outliers for taxvalue to ensure data is usable
     df = df[(df.taxvaluedollarcnt < 3_000_000)]
@@ -127,50 +151,66 @@ def clean_df(df):
     df = df[(df.bedroomcnt > 0) & (df.bathroomcnt > 0)]
             
     # Deal with remaining nulls
-    df = handle_missing_values(df, prop_required_column = .6, prop_required_row = .75)
-    
-    #Drop rows with null values since it is only a small portion of the dataframe 
-    df = df.dropna()
+    df = handle_missing_values(df, prop_required_column = .5, prop_required_row = .7)
     
     # Create a column that is the age of the property
     df['age'] = 2022 - df.yearbuilt
-            
-    # Rename FIPS codes to their respective counties
-    df.fips = df.fips.replace({6037:'Los Angeles',
-                           6059:'Orange',          
-                           6111:'Ventura'})
-    # Rename 'fips' to 'county
-    df.rename(columns={'fips':'county'}, inplace = True)
+    
+    # Create a column for county name based on FIPS
+    df['county'] = df.fips.apply(lambda x: 'orange' if x == 6059.0 else 'los_angeles'
+                                 if x == 6037.0 else 'ventura')  
             
     # Determine unnecessary columns
     cols_to_remove = ['id','calculatedbathnbr', 'finishedsquarefeet12', 'fullbathcnt',
-              'heatingorsystemtypeid','propertycountylandusecode',
-              'propertylandusetypeid','propertyzoningdesc', 
-              'propertylandusedesc', 'unitcnt', 'censustractandblock']    
+              'heatingorsystemtypeid', 'heatingorsystemdesc', 'propertycountylandusecode',
+              'propertylandusetypeid','propertyzoningdesc', 'regionidcity', 'regionidzip', 
+              'propertylandusedesc', 'unitcnt', 'censustractandblock', 'buildingqualitytypeid']    
      # Create a new dataframe that dropps those columns       
     df = df.drop(columns = cols_to_remove)
-            
-    #Drop rows with null values since it is only a small portion of the dataframe 
-    df = df.dropna()
+    
+#         #Drop rows with null values since it is only a small portion of the dataframe 
+#     df = df.dropna()
     
     return df
 
 ############################# Split #################################
 
 def split_data(df):
-    ''' 
-    This function will take in the data and split it into train, 
-    validate, and test datasets for modeling, evaluating, and testing
     '''
-    train_val, test = train_test_split(df, train_size = .8, random_state = 123)
+    This function takes in the dataframe and target variable name as arguments and then
+    splits the dataframe into train (56%), validate (24%), & test (20%)
+    It will return a list containing the following dataframes: train (for exploration), 
+    X_train, X_validate, X_test, y_train, y_validate, y_test
+    '''
+    # split df into train_validate (80%) and test (20%)
+    train_validate, test = train_test_split(df, test_size=.20, random_state=123)
+    # split train_validate into train(70% of 80% = 56%) and validate (30% of 80% = 24%)
+    train, validate = train_test_split(train_validate, test_size=.3, random_state=123)
 
-    train, validate = train_test_split(train_val, train_size = .7, random_state = 123)
+#     #Make copies of train, validate, and test
+#     train = train.copy()
+#     validate = validate.copy()
+#     test = test.copy()
+    
+#     # create X_train by dropping the target variable 
+#     X_train = train.drop(columns=[target_var])
+#     # create y_train by keeping only the target variable.
+#     y_train = train[[target_var]]
 
-    return train, validate, test
+#     # create X_validate by dropping the target variable 
+#     X_validate = validate.drop(columns=[target_var])
+#     # create y_validate by keeping only the target variable.
+#     y_validate = validate[[target_var]]
 
+#     # create X_test by dropping the target variable 
+#     X_test = test.drop(columns=[target_var])
+#     # create y_test by keeping only the target variable.
+#     y_test = test[[target_var]]
+
+    return train, validate, test, 
 ############################## Scale #################################
 
-def min_max_df(df):
+def min_max_df(df, features):
     '''
     Scales the df. using the MinMaxScaler()
     takes in the df and returns the df in a scaled fashion.
@@ -179,7 +219,7 @@ def min_max_df(df):
     df = df.copy()
 
     # Create the scaler
-    scaler = sklearn.preprocessing.MinMaxScaler()
+    scaler = MinMaxScaler()
 
     # Fit the scaler 
     scaler.fit(df)
@@ -194,21 +234,22 @@ def min_max_split(train, validate, test):
     takes in the train, validate, and test data splits and returns their scaled counterparts.
     If return_scaler is true, the scaler object will be returned as well.
     '''
-    # Make copies of train, validate, and test data splits
+    # Make the scaler
+    scaler = MinMaxScaler()
+    # List columns that need to be scaled
+    cols = train[['bathroomcnt', 'bedroomcnt',
+       'calculatedfinishedsquarefeet',
+       'lotsizesquarefeet', 'roomcnt', 'yearbuilt',
+       'structuretaxvaluedollarcnt', 'taxvaluedollarcnt',
+       'landtaxvaluedollarcnt', 'taxamount', 'taxrate', 'age']].columns.tolist()
+    # Make a copy of original train, validate, and test
     train_scaled = train.copy()
     validate_scaled = validate.copy()
     test_scaled = test.copy()
-
-    # Create the scaler
-    scaler = sklearn.preprocessing.MinMaxScaler()
-
-    # Fit scaler on train dataset
-    scaler.fit(train)
-
-    # Transform and rename columns for all three datasets
-    train_scaled = pd.DataFrame(scaler.transform(train), columns = train.columns.tolist())
-    validate_scaled = pd.DataFrame(scaler.transform(validate), columns = train.columns.tolist())
-    test_scaled = pd.DataFrame(scaler.transform(test), columns = train.columns.tolist())
+    # Use/fit the Scaler
+    train_scaled[cols] = scaler.fit_transform(train[cols])
+    validate_scaled[cols] = scaler.fit_transform(validate[cols])
+    test_scaled[cols] = scaler.fit_transform(test[cols])
 
     return train_scaled, validate_scaled, test_scaled
 
@@ -220,15 +261,20 @@ def wrangle_zillow():
     cleaned and prepped datasets
     '''
     # Acquire the df
-    df = acquire_df()
+    acquire = acquire_df()
 
     # Get a clean df
-    cleaned = clean_df(df)
+    cleaned = clean_df(acquire)
 
+    # Create more features to use
+    df = create_features(cleaned)
+    
     # Split that clean df to ensure minimal data leakage
-    train, validate, test = split_data(cleaned)
+    train, validate, test, 
+    X_train, X_validate, X_test, 
+    y_train, y_validate, y_test = split_data(df, 'logerror')
 
-    return train, validate, test
+    return train, validate, test, X_train, X_validate, X_test, y_train, y_validate, y_test
 
 ############################# Modeling ################################   
 ##################### Show Clusters/Centroids #########################
@@ -250,9 +296,11 @@ def cluster(df, feature1, feature2, k):
     plt.figure(figsize=(9, 7))
     
     for cluster, subset in df.groupby('cluster'):
-        plt.scatter(subset[feature2], subset[feature1], label='cluster ' + str(cluster), alpha=.6)
+        plt.scatter(subset[feature1], subset[feature2],  label='cluster ' + str(cluster), 
+                    alpha=.6)
     
-    centroids.plot.scatter(y=feature1, x=feature2, c='black', marker='x', s=100, ax=plt.gca(), label='centroid')
+    centroids.plot.scatter(x=feature1, y=feature2, c='black', marker='x', s=100, ax=plt.gca(),
+                           label='centroid')
     
     plt.legend()
     plt.xlabel(feature1)
@@ -274,7 +322,88 @@ def inertia(df, feature1, feature2, r1, r2):
         kmeans.fit(X)
         inertias[k] = kmeans.inertia_
     
-    pd.Series(inertias).plot(xlabel='k', ylabel='Inertia', figsize=(9, 7))
+    pd.Series(inertias).plot(xlabel='k', ylabel='Inertia', figsize=(9, 7)).plot(marker='x')
     plt.grid()
     return
 
+####################### Plotting Variable Pairs #########################
+
+def plot_variable_pairs(df):
+    # plot the columns in a pairplot
+    sns.pairplot(df, kind = 'reg', corner = True, plot_kws={'line_kws':{'color':'red'}})
+    plt.show()
+#     plt.tight_layout()
+
+
+def create_features(df):
+    df['age_bin'] = pd.cut(df.age, 
+                           bins = [0, 5, 10, 20, 30, 40, 50, 60, 70, 
+                                   80, 90, 100, 110, 120, 130, 140],
+                           labels = [0, .066, .133, .20, .266, .333, .40, .466, 
+                                     .533, .60, .666, .733, .8, .866, .933])
+
+    # Create taxrate column
+    df['taxrate'] = df.taxamount/df.taxvaluedollarcnt*100
+
+    # Create acres column
+    df['acres'] = df.lotsizesquarefeet/43560
+
+    # Bin the acres
+    df['acres_bin'] = pd.cut(df.acres, bins = [0, .10, .15, .25, .5, 
+                                               1, 5, 10, 20, 50, 200], 
+                       labels = [0, .1, .2, .3, .4, 
+                                 .5, .6, .7, .8, .9])
+    # Bin counties
+    df['county_code_bin'] = pd.cut(df.fips, bins=[0, 6037.0, 6059.0, 6111.0], 
+                             labels = ['Los Angeles County', 'Orange County',
+                             'Ventura County'])
+    
+    # Make an absolute value of logerror column
+    df['abs_logerror'] = abs(df.logerror)
+    
+    # Bin abs_logerror
+    df['abs_logerror_bin'] = pd.cut(df.abs_logerror, [.05, .1, .15, .2, .25, 
+                                                      .3, .35, .4, .45, 5])
+    
+    # Bin logerror
+    df['logerror_bin'] = pd.cut(df.logerror, [-5, -.2, -.05, .05, .2, 5])
+    
+    # Bin sqft
+    df['sqft_bin'] = pd.cut(df.calculatedfinishedsquarefeet, 
+                            bins = [0, 800, 1000, 1250, 1500, 2000, 
+                                    2500, 3000, 4000, 7000, 12000],
+                            labels = [0, .1, .2, .3, .4, 
+                                      .5, .6, .7, .8, .9]
+                       )
+
+    # Dollar/Sqft for structure
+    df['structure_dollar_per_sqft'] = df.structuretaxvaluedollarcnt/df.calculatedfinishedsquarefeet
+
+    df['structure_dollar_sqft_bin'] = pd.cut(df.structure_dollar_per_sqft, 
+                                             bins = [0, 25, 50, 75, 100, 150, 
+                                                     200, 300, 500, 1000, 1500],
+                                             labels = [0, .1, .2, .3, .4, 
+                                                       .5, .6, .7, .8, .9]
+                                            )
+
+    # Dollar/Sqft for land
+    df['land_dollar_per_sqft'] = df.landtaxvaluedollarcnt/df.lotsizesquarefeet
+
+    df['lot_dollar_sqft_bin'] = pd.cut(df.land_dollar_per_sqft, bins = [0, 1, 5, 20, 50, 100, 
+                                                                        250, 500, 1000, 1500, 2000],
+                                       labels = [0, .1, .2, .3, .4, 
+                                                 .5, .6, .7, .8, .9]
+                                      )
+
+    # Make bins floats
+    df = df.astype({'sqft_bin': 'float64', 'acres_bin': 'float64', 'age_bin': 'float64',
+                    'structure_dollar_sqft_bin': 'float64', 'lot_dollar_sqft_bin': 'float64'})
+
+    # Ratio of bathrooms to bedrooms
+    df['bath_bed_ratio'] = df.bathroomcnt/df.bedroomcnt
+
+#     # 12447 is the ID for city of LA. 
+#     # I confirmed through sampling and plotting, as well as looking up a few addresses.
+#     df['cola'] = df['regionidcity'].apply(lambda x: 1 if x == 12447.0 else 0)
+
+    return df
