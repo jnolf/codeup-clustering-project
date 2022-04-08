@@ -64,7 +64,7 @@ def acquire_df(use_cache=True):
 
 ################## Dealing With Missing Values #####################
 
-def handle_missing_values(df, prop_required_column = .6, prop_required_row = .75):
+def handle_missing_values(df, prop_required_column = .5, prop_required_row = .70):
     ''' Takes in a DataFrame and is defaulted to have at least 60% of values for 
     columns and 75% for rows'''
     threshold = int(round(prop_required_column * len(df.index),0))
@@ -168,8 +168,8 @@ def clean_df(df):
      # Create a new dataframe that dropps those columns       
     df = df.drop(columns = cols_to_remove)
     
-#         #Drop rows with null values since it is only a small portion of the dataframe 
-#     df = df.dropna()
+        #Drop rows with null values since it is only a small portion of the dataframe 
+    df = df.dropna()
     
     return df
 
@@ -183,9 +183,9 @@ def split_data(df):
     X_train, X_validate, X_test, y_train, y_validate, y_test
     '''
     # split df into train_validate (80%) and test (20%)
-    train_validate, test = train_test_split(df, test_size=.20, random_state=123)
+    train_validate, test = train_test_split(df, test_size=.20, random_state=1349)
     # split train_validate into train(70% of 80% = 56%) and validate (30% of 80% = 24%)
-    train, validate = train_test_split(train_validate, test_size=.3, random_state=123)
+    train, validate = train_test_split(train_validate, test_size=.3, random_state=1349)
 
 #     #Make copies of train, validate, and test
 #     train = train.copy()
@@ -362,7 +362,7 @@ def create_features(df):
     df['abs_logerror'] = abs(df.logerror)
     
     # Bin abs_logerror
-    df['abs_logerror_bin'] = pd.cut(df.abs_logerror, [.05, .1, .15, .2, .25, 
+    df['abs_logerror_bin'] = pd.cut(df.abs_logerror, [0, .05, .1, .15, .2, .25, 
                                                       .3, .35, .4, .45, 5])
     
     # Bin logerror
@@ -407,3 +407,17 @@ def create_features(df):
 #     df['cola'] = df['regionidcity'].apply(lambda x: 1 if x == 12447.0 else 0)
 
     return df
+
+
+def get_zillow_dummies(train, validate, test, cat_columns = ['age_bin', 'county', 'county_code_bin', 
+                                                             'abs_logerror_bin', 'logerror_bin']):
+    '''
+    This function takes in train, validate, test and a list of categorical columns for dummies (cat_columns)
+    default col_list is for zillow 
+    '''
+    # create dummies 
+    train = pd.get_dummies(data = train, columns = cat_columns, drop_first=False)
+    validate = pd.get_dummies(data = validate, columns = cat_columns, drop_first=False)
+    test = pd.get_dummies(data = test, columns = cat_columns, drop_first=False)
+    
+    return train, validate, test

@@ -1,5 +1,5 @@
 ---- 
-## PROJECT DETAILS FOR ZILLOW DATASET
+## Zillow Clustering Project
 #### Reported by Jerry Nolf  -  April 8, 2022
 ---- 
 ### 1. Overview Project Goals
@@ -18,23 +18,57 @@
 - Is there a linear relationship between logerror and age for each county?
 - Is there a linear relationship between acres and logerror?
 - What counties have the largest log errors?
+
 ---- 
 ### 4. Data Dictionary 
-|Column | Description | Dtype|
-|--------- | --------- | ----------- |
-|bedroom | the number of bedrooms | int64 |
-|bathroom | the number of bathrooms | int64 |
-|square_ft | square footage of property | int64 |
-|lot_size | square footage of lot | int 64 |
-|tax_value | property tax value dollar amount | int 64 |
-|year_built | year the property was built | int64 |
-|fips | geo code of property | int64 |
-|county | county the property is in | object |
-|age | the difference between year_built and 2017 | int 64
-|los_angeles | county name of geo code  | uint8 |
-|orange | county name of geo code | uint8 |
-|ventura | county name of geo code | uint8 |
-|logerror | error in zestimate | int64
+| Column Name               | Description                              | Data Type              |
+|---------------------------|------------------------------------------|------------------------|
+| fips                      | FIPS code of property                    | float64                |
+| regionidzip               | zip code (not accurate)                  | float64                |
+| county                    | which county property is in              | object                 |
+| lot_dollar_sqft_bin       | bin size for lotsize                     | float64                |
+| land_dollar_per_sqft      | landtaxvaluedollarcnt/sqft               | float64                |
+| structure_dollar_sqft_bin | bin size for dollar per square foot      | float64                |
+| structure_dollar_per_sqft | dollar per square foot                   | float64                |
+| sqft_bin                  | bin size for square footage              | float64                |
+| acres_bin                 | bin size for acres                       | float64                |
+| acres                     | number of acres (lotsize/43560)          | float64                |
+| taxrate                   | tax rate of property                     | float64                |
+| age_bin                   | bin size for age                         | float64                |
+| age                       | age of a property (2017 - yearbuilt)     | float64                |
+| ventura                   | if county is in Ventura =1, else 0       | unit8                  |
+| orange                    | if property is in Orange =1, else 0      | unit8                  |
+| los_angeles               | if property is in Los Angeles =1, else 0 | unit8                  |
+| property_id               | property id                              | int64                  |
+| propertylandusedesc       | property land use type                   | pbject                 |
+| transactiondate           | transaction date                         | object                 |
+| logerror                  | log error                                | float64                |
+| id                        | ID for the property                      | int64                  |
+| censustractandblock       | census information                       | float64                |
+| tax_amount                | tax amount of property                   | float64                |
+| assessmentyear            | year of tax assessment                   | float64                |
+| landtaxvaluedollarcnt     | tax value in dollars of the land         | float64                |
+| tax_value                 | tax value of property                    | float64                |
+| structuretaxvaluedollarcnt| tax value in dollars of the structure    | float64                |
+| year_built                | year property was built                  | float64                |
+| roomcnt                   | number of rooms                          | float64                |
+| regionidzip               | id for region by zip code                | float64                |
+| regionidcity              | id for region by city                    | float64                |
+| rawcensustractandblock    | census data                              | float64                |   
+| propertycountylandusecode | property county land use                 | object                 |
+| lotsizesquarefeet         | lot size square footage                  | float64                |
+| latitude                  | latitude coordinate                      | float64                |
+| longitude                 | longitude coordinate                     | float64                |
+| fullbathcnt               | number of full bathrooms                 | float64                |
+| finishedsquarefeet12      | square footage                           | float64                |
+| calculatesfinishedsquarefeet  | square footage of property               | float64                |
+| calculatedbathnbr         | calculated number of bathrooms           | float64                |
+| bedroomcnt                | number of bedrooms                       | float64                |
+| bathroom cnt              | number of bathrooms                      | float64                |
+| id                        | ID for the property                      | int64                  |
+| propertylandusetypeid     | property ID                              | float64                |
+| parcelid                  | property ID                              | int64                  |
+
 ---- 
 ## PROCESS:
 The following outlines the process taken through the Data Science Pipeline to complete this project.  
@@ -93,7 +127,7 @@ Plan ➜ Acquire ➜ Prepare ➜ Explore ➜ Model & Evaluate ➜ Deliver
 - Present a final Jupyter Notebook
 - Make modules used and project files available on Github
 
- ---- 
+---- 
 ## REPRODUCIBILITY: 
 	
 ### Steps to Reproduce
@@ -118,7 +152,7 @@ Plan ➜ Acquire ➜ Prepare ➜ Explore ➜ Model & Evaluate ➜ Deliver
 - location_cluster
 - house-to_lot_cluster
 
- Using these drivers, the model will decrease log error by 0.0176477
+Using these drivers, the model will decrease log error by 0.0176477
 
 ### Recommendation(s):
 While our model does improve slightly on absolute log error, higher quality data is needed in order for larger gains.
