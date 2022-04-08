@@ -22,19 +22,19 @@
 ### 4. Data Dictionary 
    |Column | Description | Dtype|
     |--------- | --------- | ----------- |
-    bedroom | the number of bedrooms | int64 |
-    bathroom | the number of bathrooms | int64 |
-    square_ft | square footage of property | int64 |
-    lot_size | square footage of lot | int 64 |
-    tax_value | property tax value dollar amount | int 64 |
-    year_built | year the property was built | int64 |
-    fips | geo code of property | int64 |
-    county | county the property is in | object |
-    age | the difference between year_built and 2017 | int 64
-    los_angeles | county name of geo code  | uint8 |
-    orange | county name of geo code | uint8 |
-    ventura | county name of geo code | uint8 |
-    logerror | error in zestimate | int64
+    |bedroom | the number of bedrooms | int64 |
+    |bathroom | the number of bathrooms | int64 |
+    |square_ft | square footage of property | int64 |
+    |lot_size | square footage of lot | int 64 |
+    |tax_value | property tax value dollar amount | int 64 |
+    |year_built | year the property was built | int64 |
+    |fips | geo code of property | int64 |
+    |county | county the property is in | object |
+    |age | the difference between year_built and 2017 | int 64
+    |los_angeles | county name of geo code  | uint8 |
+    |orange | county name of geo code | uint8 |
+    |ventura | county name of geo code | uint8 |
+    |logerror | error in zestimate | int64
 ---- 
 ## PROCESS:
 The following outlines the process taken through the Data Science Pipeline to complete this project.  
